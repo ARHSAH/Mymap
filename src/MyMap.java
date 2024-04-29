@@ -5,15 +5,29 @@
     import java.util.function.Consumer;
     import java.util.function.Predicate;
 
-    public class MyMap<K,V>  {
+    public class MyMap<K,V> {
+
+        interface MyIterator<K> extends Iterator<K> {
+            K nextByAmount(int amount);
+
+            K prevByAmount(int amount);
+
+            boolean hasPrevious();
+
+            K previous();
+
+            void remove();
+            // same as Iterator remove
+
+            int previousIndex();
+
+            int nextIndex();
+        }
+
+
         K[] keys = (K[]) new Object[0];
         V[] values = (V[]) new Object[0];
         int size = 0;
-
-
-
-
-
 
         public V get(K key) {
             for (int i = 0; i < size; i++) {
@@ -175,31 +189,91 @@
 
         }
 
-//        public MyIterator<K> iterator(){
-//            return super
-//        }
-//
-//        @Override
-//        public boolean hasNext() {
-//            return false;
-//        }
-//
-//        @Override
-//        public K next() {
-//            return null;
-//        }
-//
-//        @Override
-//        public void remove() {
-//            Iterator.super.remove();
-//        }
+        public MyIterator<K> iterator(){
+            return new MyIterator<K>() {
+                int index = -1;
+                @Override
+                public K nextByAmount(int amount) {
+                    for (int i = 0 ; i < amount ; i++){
+                        index ++;
+                    }
+                    return keys[index];
+                }
+
+                @Override
+                public K prevByAmount(int amount) {
+                    for (int i = 0 ; i < amount ; i++){
+                        index --;
+                    }
+                    return keys[index];
+                }
+
+                @Override
+                public boolean hasPrevious() {
+                    if(index > 0){
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public K previous() {
+                    if(hasPrevious()){
+                        index --;
+                        return keys[index];
+                    }
+                    return null;
+                }
+
+                @Override
+                public void remove() {
+                    MyMap.this.remove(index);
+                }
+
+                @Override
+                public int previousIndex() {
+                    return index - 1;
+                }
+
+                @Override
+                public int nextIndex() {
+                    if(index == size - 1){
+                        return -1;
+                    }
+                    return index + 1;
+                }
+
+                @Override
+                public boolean hasNext() {
+                    if(index < size - 1){
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public K next() {
+                    if(hasNext()){
+                        index ++;
+                        return keys[index + 1];
+                    }
+                    return null;
+                }
+            };
+        }
+
         public void replaceAll(BiFunction<K,V,V> biFunction){
             for(int i = 0 ; i < size ; i++){
                 values[i] = biFunction.apply(keys[i], values[i]);
             }
         }
-        public void compute(K key, BiFunction<K, V, V> biFunction){
+        public V compute(K key, BiFunction<K, V, V> biFunction){
             int index = indexOf(key);
             values[index] = biFunction.apply(keys[index], values[index]);
+            return values[index];
         }
+
+
+
+
     }
